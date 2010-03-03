@@ -39,9 +39,11 @@ my $p = new XML::Parser(
 		Char => \&char_handler
 	}, 
 	ErrorContext => 2);
-$p->parsefile($ARGV[0]);
-#$p->parse(*stdin);
-#$p->parsefile("border-germany.osm");
+if (not -t STDIN) {
+    $p->parse(*STDIN);
+} else {
+    $p->parsefile($ARGV[0]);
+}
 $dbh->commit();
 
 print Dumper(\%count);
