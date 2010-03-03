@@ -57,10 +57,6 @@ my $p = new XML::Parser(
 	}, 
 	ErrorContext => 2);
 
-
-#$dbh->do('PRAGMA synchronous=OFF;');
-#$dbh->do('PRAGMA journal_mode=OFF;');
-
 if (not -t STDIN) {
     $p->parse(*STDIN);
 } else {
@@ -458,7 +454,7 @@ sub init_db()
 		{
 			$sth=$dbh->do($query);
 		}
-		#$dbh->commit();
+		$dbh->commit();
 }
 
 sub autouserid() # Creates a new user ID if necessary; returns in any case the user ID
