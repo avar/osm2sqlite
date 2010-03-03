@@ -18,6 +18,7 @@ my $dbh = DBI->connect("dbi:SQLite:dbname=$dbname"
 # We need just very few of these tokens actually as global values.
 my ($node_id);
 my ($nd_last_way_id);
+my $nd_ordering;
 my($way_id, $way_changeset, $way_visible, $way_userstring_id, $way_timestamp);
 #my($node_id, $node_lat, $node_lon, $node_changeset, $node_visible, $node_userstring_id, $node_version, $node_uid, $node_timestamp);
 my($relation_id, $relation_changeset, $relation_visible, $relation_userstring_id, $relation_timestamp);
@@ -32,7 +33,7 @@ my %sql = (
     add_way        => qq[INSERT INTO way (id, changeset, visible, userstring_id, timestamp) VALUES (?, ?, ?, ?, ?)],
     add_nd         => qq[INSERT INTO nd (ref, way_id, ordering) VALUES (?, ?, ?)],
     add_rel        => qq[INSERT INTO relation (id, changeset, visible, userstring_id, timestamp) VALUES (?, ?, ?, ?, ?)],
-    add_rel_member => qq[INSERT INTO member (membertype_id, ref, role, relation_id, ordering) VALUES (?, ?, ?, ?, ?)],
+    add_rel_member => qq[INSERT INTO member (membertype, ref, role, relation_id, ordering) VALUES (?, ?, ?, ?, ?)],
     add_tag        => qq[INSERT INTO tag (k, v, tagparenttype_id, tagparent_id, ordering) VALUES (?, ?, ?, ?, ?)],
     add_changeset  => qq[INSERT INTO changeset (id, closed_at, max_lat, uid, max_lon, open, created_at, min_lat, min_lon, userstring_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)],
     ustr_count     => qq[SELECT count(id) as c, id FROM userstring WHERE name = ?],
@@ -174,7 +175,6 @@ sub start_handler()
 			# Ok, let's go ahead reading in way node references.
 			my $nd_ref=$attr_vals{'ref'};
 			my $nd_way_id=$way_id;
-            my $nd_ordering;
 			if($nd_last_way_id == $way_id)
 			{
 				$nd_ordering++;
@@ -418,13 +418,12 @@ sub init_db()
 		);",
 		"CREATE TABLE IF NOT EXISTS member
 		(
-			-- type is normalized to membertype as foreign key
-			membertype_id INTEGER NOT NULL,
+			membertype TEXT NOT NULL,
 			ref INTEGER NOT NULL,
 			role TEXT,
 			relation_id INTEGER NOT NULL,
 			ordering INTEGER NOT NULL,
-			PRIMARY KEY(relation_id, membertype_id, ref, role, ordering)
+			PRIMARY KEY(relation_id, membertype, ref, role, ordering)
 		);", 
 		"CREATE TABLE IF NOT EXISTS tag
 		(
@@ -435,14 +434,6 @@ sub init_db()
 			ordering INTEGER NOT NULL,
 			PRIMARY KEY(k, v, tagparenttype_id, tagparent_id, ordering)
 		);", 
-		"CREATE TABLE IF NOT EXISTS membertype
-		(
-			id INTEGER PRIMARY KEY,
-			name TEXT
-		);", 
-		"INSERT INTO membertype (id, name) VALUES (1, 'way');",
-		"INSERT INTO membertype (id, name) VALUES (2, 'node');",
-		"INSERT INTO membertype (id, name) VALUES (3, 'relation');",
 		"CREATE TABLE IF NOT EXISTS changeset
 		(
 			id INTEGER PRIMARY KEY,
